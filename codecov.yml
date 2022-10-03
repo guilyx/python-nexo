@@ -16,6 +16,7 @@ parsers:
 
 ignore:
   - "setup.py"
+  - "examples/*"
 
 comment:
   layout: "reach,diff,flags,files,footer"
