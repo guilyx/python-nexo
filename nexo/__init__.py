@@ -2,6 +2,7 @@
 .. moduleauthor:: Erwin Lejeune
 """
 
-__version__ = '0.0.1'
+__version__ = '1.0.0'
 
 from nexo.client import Client
+from nexo.response_serializers import AdvancedOrderResponse, Balances, Orders, Pairs, Quote, TradeHistory, Transaction, OrderResponse, OrderDetails

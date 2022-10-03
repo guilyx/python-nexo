@@ -76,16 +76,12 @@ class BaseClient:
         if data and isinstance(data, dict):
             kwargs['data'] = data
 
-        # generate signature
-        # kwargs['data']['timestamp'] = int(time.time() * 1000 + self.timestamp_offset)
-        # kwargs['data']['signature'] = self._create_hmac_signature(kwargs['data'])
-
         # sort get and post params to match signature order
         if data:
             # sort post params and remove any arguments with values of None
             kwargs['data'] = self._order_params(kwargs['data'])
             # Remove any arguments with values of None.
-            null_args = [i for i, (key, value) in enumerate(kwargs['data']) if value is None]
+            null_args = [i for i, (_, value) in enumerate(kwargs['data']) if value is None]
             for i in reversed(null_args):
                 del kwargs['data'][i]
 
