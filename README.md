@@ -33,7 +33,7 @@ This is an unofficial Python wrapper for the Nexo Pro exchange REST API v1. I am
 
 If you came here looking for the Nexo exchange to purchase cryptocurrencies, then go here. If you want to automate interactions with Nexo, stick around.
 
-Heavily influenced by (https://github.com/sammchardy/python-binance)[python-binance]
+Heavily influenced by [python-binance](https://github.com/sammchardy/python-binance)
 
 - ✨ Work in Progress
 - 🎌 Built with Python
@@ -42,7 +42,7 @@ Heavily influenced by (https://github.com/sammchardy/python-binance)[python-bina
 
 ## Roadmap 🌱
 
-See it on Issue https://github.com/guilyx/python-nexo/issues/1
+See it on Issue https://github.com/guilyx/python-nexo/issues/2
 
 ## Preparation 🔎
 
