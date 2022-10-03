@@ -2,6 +2,7 @@
 pull_request_rules:
   - name: Assign the main reviewers
     conditions:
+      - check-success=CodeFactor
     actions:
       request_reviews:
         users:
