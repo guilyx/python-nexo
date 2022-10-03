@@ -6,9 +6,7 @@ on:
       - '*.py'
   pull_request:
     paths:
-    - '*.py'
-  workflow_dispatch:
-
+      - '*.py'
 
 jobs:
   test:
