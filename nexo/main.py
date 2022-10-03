@@ -11,5 +11,5 @@ if __name__ == "__main__":
     assert(nexo_secret)
 
     c = Client(nexo_key, nexo_secret)
-    pairs = c.get_pairs()
+    pairs = c.get_pairs(serialize_json_to_object=True)
     print(pairs)

@@ -11,6 +11,7 @@ import json
 import time
 from nexo.exceptions import NexoAPIException, NEXO_API_ERROR_CODES, NexoRequestException
 from nexo.helpers import check_pair_validity, compact_json_dict
+from nexo.response_serializers import Balances, AdvancedOrderResponse, OrderDetails, OrderResponse, Orders, Pairs, Transaction, Quote, TradeHistory
 
 class BaseClient:
 
@@ -155,15 +156,23 @@ class Client(BaseClient):
     def _delete(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
         return self._request('delete', path, version, **kwargs)
 
-    def get_account_balances(self) -> Dict:
-        balances = self._get('accountSummary')
-        return balances
+    def get_account_balances(self, serialize_json_to_object: bool = False) -> Dict:
+        balances_json = self._get('accountSummary')
+
+        if serialize_json_to_object:
+            return Balances(balances_json)
+
+        return balances_json
     
-    def get_pairs(self) -> Dict:
-        pairs = self._get('pairs')
-        return pairs
+    def get_pairs(self, serialize_json_to_object: bool = False) -> Dict:
+        pairs_json = self._get('pairs')
+
+        if serialize_json_to_object:
+            return Pairs(pairs_json)
+
+        return pairs_json
     
-    def get_price_quote(self, pair: str, amount: float, side: str, exchanges: str = None) -> Dict:
+    def get_price_quote(self, pair: str, amount: float, side: str, exchanges: str = None, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to get price quote with side = {side}, side must be 'buy' or 'sell'")
         if not check_pair_validity(pair):
@@ -178,10 +187,14 @@ class Client(BaseClient):
         if exchanges:
             data["exchanges"] = exchanges
 
-        quote = self._get('quote', data=data)
-        return quote
+        quote_json = self._get('quote', data=data)
+
+        if serialize_json_to_object:
+            return Quote(quote_json)
+
+        return quote_json
     
-    def get_order_history(self, pairs: List[str], start_date: int, end_date: int, page_size: int, page_num: int) -> Dict:
+    def get_order_history(self, pairs: List[str], start_date: int, end_date: int, page_size: int, page_num: int, serialize_json_to_object: bool = False) -> Dict:
         data = {
             "pairs": pairs,
             "startDate": start_date,
@@ -189,14 +202,22 @@ class Client(BaseClient):
             "pageSize": page_size,
             "pageNum": page_num
         }
-        orders = self._get('orders', data=data)
-        return orders
+        orders_json = self._get('orders', data=data)
 
-    def get_order_details(self, id: str) -> Dict:
-        order_details = self._get(f'orderDetails/{id}')
-        return order_details
+        if serialize_json_to_object:
+            return Orders(orders_json)
 
-    def get_trade_history(self,  pairs: List[str], start_date: int, end_date: int, page_size: int, page_num: int) -> Dict:
+        return orders_json
+
+    def get_order_details(self, id: str, serialize_json_to_object: bool = False) -> Dict:
+        order_details_json = self._get(f'orderDetails/{id}')
+
+        if serialize_json_to_object:
+            return OrderDetails(order_details_json)
+
+        return order_details_json
+
+    def get_trade_history(self, pairs: List[str], start_date: int, end_date: int, page_size: int, page_num: int, serialize_json_to_object: bool = False) -> Dict:
         for pair in pairs:
             if not check_pair_validity(pair):
                 raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
@@ -208,14 +229,23 @@ class Client(BaseClient):
             "pageSize": page_size,
             "pageNum": page_num
         }
-        trades = self._get('trades', data=data)
+
+        trades_json = self._get('trades', data=data)
+
+        if serialize_json_to_object:
+            return TradeHistory(trades_json)
+
         return trades
     
-    def get_transaction_info(self, transaction_id: str) -> Dict:
-        transaction = self._get(f'transaction/{transaction_id}')
-        return transaction
+    def get_transaction_info(self, transaction_id: str, serialize_json_to_object: bool = False) -> Dict:
+        transaction_json = self._get(f'transaction/{transaction_id}')
 
-    def place_order(self, pair: str, side: str, type: str, quantity: float, price: float = None) -> Dict:
+        if serialize_json_to_object:
+            return Transaction(transaction_json)
+
+        return transaction_json
+
+    def place_order(self, pair: str, side: str, type: str, quantity: float, price: float = None, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to place an order with side = {side}, side must be 'buy' or 'sell'")
         if type != "market" and "limit":
@@ -233,10 +263,14 @@ class Client(BaseClient):
         if price:
             data["price"] = price
 
-        order_id = self._post('orders', data=data)
-        return order_id
+        order_id_json = self._post('orders', data=data)
+
+        if serialize_json_to_object:
+            return OrderResponse(order_id_json)
+        
+        return order_id_json
     
-    def place_trigger_order(self, pair: str, side: str, trigger_type: str, amount: float, trigger_price: float, trailing_distance: float = None, trailing_percentage: float = None) -> Dict:
+    def place_trigger_order(self, pair: str, side: str, trigger_type: str, amount: float, trigger_price: float, trailing_distance: float = None, trailing_percentage: float = None, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
         if trigger_type != "stopLoss" and "takeProfit" and "trailing":
@@ -258,10 +292,14 @@ class Client(BaseClient):
         if trailing_percentage:
             data["trailingPercentage"] = trailing_percentage
 
-        order_id = self._post('orders', data=data)
-        return order_id
+        order_id_json = self._post('orders', data=data)
+
+        if serialize_json_to_object:
+            return OrderResponse(order_id_json)
+
+        return order_id_json
     
-    def place_advanced_order(self, pair: str, side: str, amount: str, stopLossPrice: str, takeProfitPrice: str) -> Dict:
+    def place_advanced_order(self, pair: str, side: str, amount: str, stopLossPrice: str, takeProfitPrice: str, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
 
@@ -275,10 +313,14 @@ class Client(BaseClient):
             "stopLossPrice": stopLossPrice,
             "takeProfitPrice": takeProfitPrice
         }
-        order_id = self._post('orders', data=data)
-        return order_id
+        order_id_json = self._post('orders', data=data)
+
+        if serialize_json_to_object:
+            return AdvancedOrderResponse(order_id_json)
+
+        return order_id_json
     
-    def place_twap_order(self, pair: str, side: str, quantity: float, exchanges: List[str], splits: int, execution_interval: int) -> Dict:
+    def place_twap_order(self, pair: str, side: str, quantity: float, exchanges: List[str], splits: int, execution_interval: int, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
 
@@ -294,6 +336,9 @@ class Client(BaseClient):
             "executionInterval": execution_interval
         }
 
-        twap_order = self._post('orders/twap', data=data)
+        twap_order_json = self._post('orders/twap', data=data)
 
-        return twap_order
+        if serialize_json_to_object:
+            return AdvancedOrderResponse(twap_order_json)
+
+        return twap_order_json
