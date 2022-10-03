@@ -16,3 +16,9 @@ from nexo.response_serializers import (
     OrderResponse,
     OrderDetails,
 )
+from nexo.exceptions import (
+    NexoAPIException,
+    NotImplementedException,
+    NexoRequestException,
+    NEXO_API_ERROR_CODES
+)

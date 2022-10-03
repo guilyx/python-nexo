@@ -1,13 +1,6 @@
-name: tests-from-pip-package
+name: tests
 
-on:
-  push:
-    paths:
-      - '*.py'
-  pull_request:
-    paths:
-      - '*.py'
-  workflow_dispatch:
+on: [push]
 
 jobs:
   test:
@@ -28,11 +21,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install python-nexo
       - name: Checkout repository
         uses: actions/checkout@master
       - name: Test with pytest
         run: |
           pip install pytest
           pip install pytest-cov
-          pytest
+          pytest --cov=./
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          name: codecov-umbrella

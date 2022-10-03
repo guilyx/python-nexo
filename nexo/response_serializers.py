@@ -22,6 +22,10 @@ class WalletBalance(BaseSerializedResponse):
             self.available_balance = json_dictionary["availableBalance"]
         if "lockedBalance" in json_dictionary:
             self.locked_balance = json_dictionary["lockedBalance"]
+        if "debt" in json_dictionary:
+            self.debt = json_dictionary["debt"]
+        if "interest" in json_dictionary:
+            self.interest = json_dictionary["interest"]
 
 
 class Balances(BaseSerializedResponse):
