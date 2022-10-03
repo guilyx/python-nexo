@@ -16,7 +16,7 @@ RUN apt-get update -y && \
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN git clone  https://github.com/guilyx/python-nexo.git
+RUN git clone -b master https://github.com/guilyx/python-nexo.git
 
 WORKDIR /python-nexo
 

@@ -7,7 +7,5 @@ if [ ${TESTING} = "true" ]
 then
     pytest-3
 else
-    cd src 
-    echo "Running Python App..."
-    python3 main.py
+    tail -f /dev/null
 fi
