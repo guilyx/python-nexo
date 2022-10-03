@@ -9,8 +9,8 @@
 <div align="center">
     
 ![lint](https://github.com/guilyx/python-nexo/workflows/lint/badge.svg?branch=master)
-![tests-with-pyp](https://github.com/guilyx/python-nexo/workflows/tests-from-pip/badge.svg?branch=master)
-![tests-with-src](https://github.com/guilyx/python-nexo/workflows/tests-from-repo/badge.svg?branch=master)
+![tests-from-repository](https://github.com/guilyx/python-nexo/workflows/tests-from-repository/badge.svg?branch=master)
+![tests-from-pip-package](https://github.com/guilyx/python-nexo/workflows/tests-from-pip-package/badge.svg?branch=master)
 [![codecov](https://codecov.io/gh/guilyx/python-nexo/branch/master/graph/badge.svg?token=GXUOT9P1WE)](https://codecov.io/gh/guilyx/python-nexo)
 [![CodeFactor](https://www.codefactor.io/repository/github/guilyx/python-nexo/badge)](https://www.codefactor.io/repository/github/guilyx/python-nexo)
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/guilyx/python-nexo.svg)](http://isitmaintained.com/project/guilyx/python-nexo "Percentage of issues still open")
