@@ -1,7 +1,6 @@
 from typing import Dict, Optional, List, Tuple
 import hmac
 import hashlib
-import requests
 from operator import itemgetter
 import aiohttp
 import urllib3
