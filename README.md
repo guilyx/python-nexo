@@ -1,4 +1,29 @@
-# Nexo Pro API Wrapper built with Python
+<div align="center">
+
+# Unofficial Nexo API Wrapper (Python)
+
+✨ A Python wrapper for the Nexo Pro API ✨
+
+</div>
+
+<div align="center">
+    
+![lint](https://github.com/guilyx/python-nexo/workflows/lint/badge.svg?branch=master)
+![tests-with-pyp](https://github.com/guilyx/python-nexo/workflows/tests-from-pip/badge.svg?branch=master)
+![tests-with-src](https://github.com/guilyx/python-nexo/workflows/tests-from-repo/badge.svg?branch=master)
+[![codecov](https://codecov.io/gh/guilyx/python-nexo/branch/master/graph/badge.svg?token=GXUOT9P1WE)](https://codecov.io/gh/guilyx/python-nexo)
+[![CodeFactor](https://www.codefactor.io/repository/github/guilyx/python-nexo/badge)](https://www.codefactor.io/repository/github/guilyx/python-nexo)
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/guilyx/python-nexo.svg)](http://isitmaintained.com/project/guilyx/python-nexo "Percentage of issues still open")
+![PipPerMonths](https://img.shields.io/pypi/dm/python-nexo.svg)
+[![Pip version fury.io](https://badge.fury.io/py/python-nexo.svg)](https://pypi.python.org/pypi/python-nexo/)
+[![GitHub license](https://img.shields.io/github/license/guilyx/python-nexo.svg)](https://github.com/guilyx/python-nexo/blob/master/LICENSE)
+[![GitHub contributors](https://img.shields.io/github/contributors/guilyx/python-nexo.svg)](https://GitHub.com/guilyx/python-nexo/graphs/contributors/)
+
+</div>
+
+<div align="center">
+    
+[Report Bug](https://github.com/guilyx/python-nexo/issues) · [Request Feature](https://github.com/guilyx/python-nexo/issues)
 
 - ✨ Work in Progress
 - 🎌 Built with Python
