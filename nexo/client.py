@@ -124,6 +124,9 @@ class Client(BaseClient):
         Raises the appropriate exceptions when necessary; otherwise, returns the
         response.
         """
+        if not response.ok:
+            raise NexoRequestException("Failed to get API response: %s" % response.status_code)
+
         json_response = response.json()
         try:
             if "errorCode" in json_response:
