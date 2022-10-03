@@ -1,5 +1,6 @@
 from typing import Dict
 
+
 class BaseSerializedResponse:
     def __init__(self, json_dictionary: Dict):
         self.json_dictionary = json_dictionary
@@ -7,11 +8,12 @@ class BaseSerializedResponse:
     def __repr__(self):
         return str(self.json_dictionary)
 
+
 # GET /balances
 class WalletBalance(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "assetName" in json_dictionary:
             self.asset_name = json_dictionary["assetName"]
         if "totalBalance" in json_dictionary:
@@ -21,30 +23,35 @@ class WalletBalance(BaseSerializedResponse):
         if "lockedBalance" in json_dictionary:
             self.locked_balance = json_dictionary["lockedBalance"]
 
+
 class Balances(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "balances" in json_dictionary:
-            self.balances = [WalletBalance(balance) for balance in json_dictionary["balances"]]
+            self.balances = [
+                WalletBalance(balance) for balance in json_dictionary["balances"]
+            ]
+
 
 # GET /pairs
 class Pairs(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "pairs" in json_dictionary:
             self.pairs = json_dictionary["pairs"]
         if "minLimits" in json_dictionary:
             self.min_limits = json_dictionary["minLimits"]
         if "maxLimits" in json_dictionary:
             self.max_limits = json_dictionary["maxLimits"]
-        
+
+
 # GET /quote
 class Quote(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "pair" in json_dictionary:
             self.pair = json_dictionary["pair"]
         if "amount" in json_dictionary:
@@ -53,29 +60,32 @@ class Quote(BaseSerializedResponse):
             self.price = json_dictionary["price"]
         if "timestamp" in json_dictionary:
             self.timestamp = json_dictionary["timestamp"]
-        
+
+
 # POST /orders | /orders/trigger | /orders/advanced
 class OrderResponse(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "dealId" in json_dictionary:
             self.deal_id = json_dictionary["dealId"]
+
 
 # POST /orders/twap
 class AdvancedOrderResponse(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         if "dealId" in json_dictionary:
             super().__init__(json_dictionary)
-            
+
             self.deal_id = json_dictionary["dealId"]
         if "amount" in json_dictionary:
             self.amount = json_dictionary["amount"]
 
+
 class TradeForOrder(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "id" in json_dictionary:
             self.id = json_dictionary["id"]
         if "symbol" in json_dictionary:
@@ -98,7 +108,7 @@ class TradeForOrder(BaseSerializedResponse):
 class OrderDetails(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "id" in json_dictionary:
             self.id = json_dictionary["id"]
         if "side" in json_dictionary:
@@ -116,19 +126,21 @@ class OrderDetails(BaseSerializedResponse):
         if "trades" in json_dictionary:
             self.trades = [TradeForOrder(trade) for trade in json_dictionary["trades"]]
 
+
 # GET /orders
 class Orders(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "orders" in json_dictionary:
             self.orders = [OrderDetails(order) for order in json_dictionary["orders"]]
+
 
 # GET /trades
 class Trade(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "id" in json_dictionary:
             self.id = json_dictionary["id"]
         if "symbol" in json_dictionary:
@@ -144,17 +156,19 @@ class Trade(BaseSerializedResponse):
         if "orderId" in json_dictionary:
             self.order_id = json_dictionary["orderId"]
 
+
 class TradeHistory(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "trades" in json_dictionary:
             self.trades = [Trade(trade) for trade in json_dictionary["trades"]]
+
 
 class Transaction(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
-        
+
         if "transactionId" in json_dictionary:
             self.transaction_id = json_dictionary["transactionId"]
         if "createDate" in json_dictionary:

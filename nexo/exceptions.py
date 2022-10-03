@@ -14,31 +14,36 @@ NEXO_API_ERROR_CODES = {
     301: "Rate limit exceeded.",
 }
 
+
 class NexoAPIException(Exception):
     def __init__(self, status_code: int, response: str):
         self.code = 0
         try:
             json_res = json.loads(response)
         except ValueError:
-            self.message = 'Invalid JSON error message from Nexo: {}'.format(response.text)
+            self.message = "Invalid JSON error message from Nexo: {}".format(
+                response.text
+            )
         else:
-            self.code = json_res['errorCode']
-            self.message = json_res['errorMessage']
+            self.code = json_res["errorCode"]
+            self.message = json_res["errorMessage"]
         self.status_code = status_code
         self.response = response
-        self.request = getattr(response, 'request', None)
+        self.request = getattr(response, "request", None)
 
     def __str__(self):  # pragma: no cover
-        return f'APIError(code={self.code}): {self.message}, {NEXO_API_ERROR_CODES[self.code]}'
+        return f"APIError(code={self.code}): {self.message}, {NEXO_API_ERROR_CODES[self.code]}"
+
 
 class NexoRequestException(Exception):
     def __init__(self, message):
         self.message = message
 
     def __str__(self):
-        return 'NexoRequestException: %s' % self.message
+        return "NexoRequestException: %s" % self.message
+
 
 class NotImplementedException(Exception):
     def __init__(self, value):
-        message = f'Not implemented: {value}'
+        message = f"Not implemented: {value}"
         super().__init__(message)
