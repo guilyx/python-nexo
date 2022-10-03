@@ -235,7 +235,7 @@ class Client(BaseClient):
         if serialize_json_to_object:
             return TradeHistory(trades_json)
 
-        return trades
+        return trades_json
     
     def get_transaction_info(self, transaction_id: str, serialize_json_to_object: bool = False) -> Dict:
         transaction_json = self._get(f'transaction/{transaction_id}')
@@ -299,7 +299,7 @@ class Client(BaseClient):
 
         return order_id_json
     
-    def place_advanced_order(self, pair: str, side: str, amount: str, stopLossPrice: str, takeProfitPrice: str, serialize_json_to_object: bool = False) -> Dict:
+    def place_advanced_order(self, pair: str, side: str, amount: str, stop_loss_price: str, take_profit_price: str, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
 
@@ -310,8 +310,8 @@ class Client(BaseClient):
             "pair": pair,
             "side": side,
             "amount": amount,
-            "stopLossPrice": stopLossPrice,
-            "takeProfitPrice": takeProfitPrice
+            "stopLossPrice": stop_loss_price,
+            "takeProfitPrice": take_profit_price
         }
         order_id_json = self._post('orders', data=data)
 
@@ -320,7 +320,7 @@ class Client(BaseClient):
 
         return order_id_json
     
-    def place_twap_order(self, pair: str, side: str, quantity: float, exchanges: List[str], splits: int, execution_interval: int, serialize_json_to_object: bool = False) -> Dict:
+    def place_twap_order(self, pair: str, side: str, quantity: float, exchanges: List[str] = None, splits: int, execution_interval: int, serialize_json_to_object: bool = False) -> Dict:
         if side != "buy" and "sell":
             raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
 
@@ -331,10 +331,12 @@ class Client(BaseClient):
             "pair": pair,
             "side": side,
             "quantity": quantity,
-            "exchanges": exchanges,
             "splits": splits,
             "executionInterval": execution_interval
         }
+
+        if exchanges:
+            data["exchanges"] = exchanges
 
         twap_order_json = self._post('orders/twap', data=data)
 
