@@ -3,16 +3,18 @@ import hmac
 import hashlib
 from operator import itemgetter
 import aiohttp
+import base64
 import urllib3
+import requests
 import asyncio
 import json
 import time
 from nexo.exceptions import NexoAPIException, NEXO_API_ERROR_CODES, NexoRequestException
-from nexo.helpers import check_pair_validity
+from nexo.helpers import check_pair_validity, compact_json_dict
 
 class BaseClient:
 
-    API_URL = "https://pro-api.nexo.io/api"
+    API_URL = "https://pro-api.nexo.io"
     PUBLIC_API_VERSION = "v1"
 
     REQUEST_TIMEOUT: float = 10
@@ -21,29 +23,33 @@ class BaseClient:
         self.API_KEY = api_key
         self.API_SECRET = api_secret
         self.timestamp_offset = 0
-        
-    def _create_api_uri(self, path: str, version: str = PUBLIC_API_VERSION) -> str:
-        url = self.API_URL
-        return url + '/' + version + '/' + path
+        self.session = self._init_session()
     
-    def _generate_signature(self, data: Dict) -> str:
-        assert self.API_SECRET, "API Secret required for private endpoints"
-        ordered_data = self._order_params(data)
-        query_string = '&'.join([f"{d[0]}={d[1]}" for d in ordered_data])
-        m = hmac.new(self.API_SECRET.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
-        return m
-    
-    def _get_headers(self, url: str, payload: Dict) -> Dict:
-        headers = {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36',  # noqa
+    def _init_session(self):
+
+        session = requests.session()
+        headers = {'Accept': 'application/json',
+                   'User-Agent': 'python-nexo',
+                   'Content-Type': 'application/json',
+                   'X-API-KEY': self.API_KEY,
         }
+
+        session.headers.update(headers)
+        return session
+
+    def _create_path(self, path: str, api_version: str = PUBLIC_API_VERSION):
+        return f'/api/{api_version}/{path}'
         
-        headers['X-API-KEY'] = self.API_KEY
-        headers['X-NONCE'] = int(time.time() * 1000 + self.timestamp_offset)
-        headers['X-SIGNATURE'] = self._generate_signature(payload)
-        print(payload)
-        return headers
+    def _create_api_uri(self, path: str) -> str:
+        return f"{self.API_URL}{path}"
+    
+    @staticmethod
+    def _get_params_for_sig(data: Dict) -> str:
+        return '&'.join(["{}={}".format(key, data[key]) for key in data])
+    
+    def _generate_signature(self, nonce: str,) -> str:
+        m = hmac.new(self.API_SECRET.encode('utf-8'), str(nonce).encode('utf-8'), hashlib.sha256)
+        return base64.b64encode(m.digest())
     
     @staticmethod
     def _order_params(data: Dict) -> List[Tuple[str, str]]:
@@ -95,162 +101,199 @@ class Client(BaseClient):
         super().__init__(api_key, api_secret)
     
     @staticmethod
-    def _handle_response(response: urllib3.HTTPResponse):
+    def _handle_response(response: requests.Response):
         """Internal helper for handling API responses from the Binance server.
         Raises the appropriate exceptions when necessary; otherwise, returns the
         response.
         """
-        json_response = json.loads(response.data)
+        json_response = response.json()
         try:
             if "errorCode" in json_response:
                 if json_response["errorCode"] in NEXO_API_ERROR_CODES:
-                    raise NexoAPIException(json_response["errorCode"], response.data)
+                    raise NexoAPIException(json_response["errorCode"], response.text)
                 else:
                     raise NexoRequestException(f'Invalid Response: status: {json_response["errorCode"]}, message: {json_response["errorMessage"]}')
             return json_response
         except ValueError:
             raise NexoRequestException('Invalid Response: %s' % json_response)
     
-    def _request(self, method, uri: str, **kwargs):
-
-        kwargs = self._get_request_kwargs(method, **kwargs)
-        http = urllib3.PoolManager()
-        if method == "get" or method == "delete" or method == "head" or method == "options":
-            self.response = http.request(method=method.upper(), fields=kwargs, url=uri, headers=self._get_headers(url=f"{uri}", payload=kwargs))
-        else:
-            self.response = http.request_encode_body(method=method.upper(), fields=kwargs, url=uri, headers=self._get_headers(url=f"{uri}", payload=kwargs), encode_multipart=False)
-        
-        return self._handle_response(self.response)
-
-    def _request_api(
+    def _request(
         self, method, path: str, version=BaseClient.PUBLIC_API_VERSION, **kwargs
     ):
-        uri = self._create_api_uri(path, version)
-        return self._request(method, uri, **kwargs)
-    
+        # set default requests timeout
+        kwargs['timeout'] = 10
+
+        kwargs['data'] = kwargs.get('data', {})
+        kwargs['headers'] = kwargs.get('headers', {})
+
+        full_path = self._create_path(path, version)
+        uri = self._create_api_uri(full_path)
+
+        nonce = str(int(time.time() * 1000))
+        kwargs['headers']['X-NONCE'] = nonce
+        kwargs['headers']['X-SIGNATURE'] = self._generate_signature(nonce)
+
+        if kwargs['data'] and method == 'get':
+            kwargs['params'] = kwargs['data']
+            del kwargs['data']
+
+        if method != 'get' and kwargs['data']:
+            kwargs['data'] = compact_json_dict(kwargs['data'])
+
+        response = getattr(self.session, method)(uri, **kwargs)
+        return self._handle_response(response)
+
     def _get(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
-        return self._request_api('get', path, version, **kwargs)
+        return self._request('get', path, version, **kwargs)
 
     def _post(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
-        return self._request_api('post', path, version, **kwargs)
+        return self._request('post', path, version, **kwargs)
 
     def _put(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
-        return self._request_api('put', path, version, **kwargs)
+        return self._request('put', path, version, **kwargs)
 
     def _delete(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
-        return self._request_api('delete', path, version, **kwargs)
+        return self._request('delete', path, version, **kwargs)
 
-    def get_account_balances(self):
-        balances = self._request_api('get', 'accountSummary')
+    def get_account_balances(self) -> Dict:
+        balances = self._get('accountSummary')
         return balances
     
-    def get_pairs(self):
-        pairs = self._request_api('get', 'pairs')
+    def get_pairs(self) -> Dict:
+        pairs = self._get('pairs')
         return pairs
     
-    def get_price_quote(self, **kwargs):
-        if not "pair" in kwargs:
-            raise NexoRequestException(f"Bad Request: [pair] is a required parameter")
+    def get_price_quote(self, pair: str, amount: float, side: str, exchanges: str = None) -> Dict:
+        if side != "buy" and "sell":
+            raise NexoRequestException(f"Bad Request: Tried to get price quote with side = {side}, side must be 'buy' or 'sell'")
+        if not check_pair_validity(pair):
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
         
-        if not "amount" in kwargs:
-            raise NexoRequestException(f"Bad Request: [amount] is a required parameter")
-        
-        if not "side" in kwargs:
-            raise NexoRequestException(f"Bad Request: [side] is a required parameter")
-        
-        if kwargs["side"] != "buy" and "sell":
-            raise NexoRequestException(f"Bad Request: Tried to get price quote with side = {kwargs['side']}, side must be 'buy' or 'sell'")
-        if not check_pair_validity(kwargs["pair"]):
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {kwargs['pair']}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
+        data = {
+            "side": side,
+            "amount": amount,
+            "pair": pair
+        }
 
-        quote = self._request_api('get', 'quote', **kwargs)
+        if exchanges:
+            data["exchanges"] = exchanges
+
+        quote = self._get('quote', data=data)
         return quote
     
-    def get_order_history(self):
-        orders = self._request_api('get', 'orders')
+    def get_order_history(self, pairs: List[str], start_date: int, end_date: int, page_size: int, page_num: int) -> Dict:
+        data = {
+            "pairs": pairs,
+            "startDate": start_date,
+            "endDate": end_date,
+            "pageSize": page_size,
+            "pageNum": page_num
+        }
+        orders = self._get('orders', data=data)
         return orders
 
-    def get_order_details(self, **kwargs):
-        if not "id" in kwargs:
-            raise NexoRequestException(f"Bad Request: [id] is a required parameter")
-
-        order_details = self._request_api('get', 'orderDetails', **kwargs)
+    def get_order_details(self, id: str) -> Dict:
+        order_details = self._get(f'orderDetails/{id}')
         return order_details
 
-    def get_trade_history(self):
-        trades = self._request_api('get', 'trades')
+    def get_trade_history(self,  pairs: List[str], start_date: int, end_date: int, page_size: int, page_num: int) -> Dict:
+        for pair in pairs:
+            if not check_pair_validity(pair):
+                raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
+        
+        data = {
+            "pairs": pairs,
+            "startDate": start_date,
+            "endDate": end_date,
+            "pageSize": page_size,
+            "pageNum": page_num
+        }
+        trades = self._get('trades', data=data)
         return trades
     
-    def get_transaction_info(self, **kwargs):
-        if not "transactionId" in kwargs:
-            raise NexoRequestException(f"Bad Request: [transactionId] is a required parameter")
-
-        transaction = self._request_api('get', 'transaction', **kwargs)
+    def get_transaction_info(self, transaction_id: str) -> Dict:
+        transaction = self._get(f'transaction/{transaction_id}')
         return transaction
 
-    def place_order(self, **kwargs):
-        if not "pair" in kwargs:
-            raise NexoRequestException(f"Bad Request: [pair] is a required parameter")
-        if not "side" in kwargs:
-            raise NexoRequestException(f"Bad Request: [side] is a required parameter")
-        if not "type" in kwargs:
-            raise NexoRequestException(f"Bad Request: [type] is a required parameter")
-        if not "quantity" in kwargs:
-            raise NexoRequestException(f"Bad Request: [quantity] is a required parameter")
+    def place_order(self, pair: str, side: str, type: str, quantity: float, price: float = None) -> Dict:
+        if side != "buy" and "sell":
+            raise NexoRequestException(f"Bad Request: Tried to place an order with side = {side}, side must be 'buy' or 'sell'")
+        if type != "market" and "limit":
+            raise NexoRequestException(f"Bad Request: Tried to place an order with type = {type}, side must be 'market' or 'limit'")
+        if not check_pair_validity(pair):
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
 
-        if kwargs["side"] != "buy" and "sell":
-            raise NexoRequestException(f"Bad Request: Tried to place an order with side = {kwargs['side']}, side must be 'buy' or 'sell'")
-        if kwargs["type"] != "market" and "limit":
-            raise NexoRequestException(f"Bad Request: Tried to place an order with type = {kwargs['type']}, side must be 'market' or 'limit'")
-        if not check_pair_validity(kwargs["pair"]):
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {kwargs['pair']}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
+        data = {
+            "pair": pair,
+            "side": side,
+            "type": type,
+            "quantity": quantity
+        }
 
-        order_id = self._request_api('post', 'orders', **kwargs)
+        if price:
+            data["price"] = price
+
+        order_id = self._post('orders', data=data)
         return order_id
     
-    def place_trigger_order(self, **kwargs):
-        if not "pair" in kwargs:
-            raise NexoRequestException(f"Bad Request: [pair] is a required parameter")
-        if not "side" in kwargs:
-            raise NexoRequestException(f"Bad Request: [side] is a required parameter")
-        if not "triggerType" in kwargs:
-            raise NexoRequestException(f"Bad Request: [triggerType] is a required parameter")
-        if not "amount" in kwargs:
-            raise NexoRequestException(f"Bad Request: [amount] is a required parameter")
-        if not "triggerPrice" in kwargs:
-            raise NexoRequestException(f"Bad Request: [triggerPrice] is a required parameter")
+    def place_trigger_order(self, pair: str, side: str, trigger_type: str, amount: float, trigger_price: float, trailing_distance: float = None, trailing_percentage: float = None) -> Dict:
+        if side != "buy" and "sell":
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
+        if trigger_type != "stopLoss" and "takeProfit" and "trailing":
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with type = {trigger_type}, side must be 'market' or 'limit'")
+        if not check_pair_validity(pair):
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
 
-        if kwargs["side"] != "buy" and "sell":
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {kwargs['side']}, side must be 'buy' or 'sell'")
-        if kwargs["triggerType"] != "stopLoss" and "takeProfit" and "trailing":
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with type = {kwargs['triggerType']}, side must be 'market' or 'limit'")
-        if not check_pair_validity(kwargs["pair"]):
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {kwargs['pair']}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
+        data = {
+            "pair": pair,
+            "side": side,
+            "triggerType": trigger_type,
+            "amount": amount,
+            "triggerPrice": trigger_price
+        }
 
-        order_id = self._request_api('post', 'orders', **kwargs)
+        if trailing_distance:
+            data["trailingDistance"] = trailing_distance
+        
+        if trailing_percentage:
+            data["trailingPercentage"] = trailing_percentage
+
+        order_id = self._post('orders', data=data)
         return order_id
     
-    def place_advanced_order(self, **kwargs):
-        if not "pair" in kwargs:
-            raise NexoRequestException(f"Bad Request: [pair] is a required parameter")
-        if not "side" in kwargs:
-            raise NexoRequestException(f"Bad Request: [side] is a required parameter")
-        if not "amount" in kwargs:
-            raise NexoRequestException(f"Bad Request: [amount] is a required parameter")
-        if not "stopLossPrice" in kwargs:
-            raise NexoRequestException(f"Bad Request: [stopLossPrice] is a required parameter")
-        if not "takeProfitPrice" in kwargs:
-            raise NexoRequestException(f"Bad Request: [takeProfitPrice] is a required parameter")
+    def place_advanced_order(self, pair: str, side: str, amount: str, stopLossPrice: str, takeProfitPrice: str) -> Dict:
+        if side != "buy" and "sell":
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
 
-        if kwargs["side"] != "buy" and "sell":
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {kwargs['side']}, side must be 'buy' or 'sell'")
+        if not check_pair_validity(pair):
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
 
-        if not check_pair_validity(kwargs["pair"]):
-            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {kwargs['pair']}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
-
-        order_id = self._request_api('post', 'orders', **kwargs)
+        data = {
+            "pair": pair,
+            "side": side,
+            "amount": amount,
+            "stopLossPrice": stopLossPrice,
+            "takeProfitPrice": takeProfitPrice
+        }
+        order_id = self._post('orders', data=data)
         return order_id
     
-    def place_twap_order(self, **kwargs):
-        twap_order = self._request_api('post', 'orders/twap', **kwargs)
+    def place_twap_order(self, pair: str, side: str, quantity: float, exchanges: List[str], splits: int, execution_interval: int) -> Dict:
+        if side != "buy" and "sell":
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'")
+
+        if not check_pair_validity(pair):
+            raise NexoRequestException(f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}")
+
+        data = {
+            "pair": pair,
+            "side": side,
+            "quantity": quantity,
+            "exchanges": exchanges,
+            "splits": splits,
+            "executionInterval": execution_interval
+        }
+
+        twap_order = self._post('orders/twap', data=data)
+
         return twap_order

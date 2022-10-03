@@ -11,5 +11,5 @@ if __name__ == "__main__":
     assert(nexo_secret)
 
     c = Client(nexo_key, nexo_secret)
-    balances = c.place_order(pair="BTC/BSD", side="buy", type="market", quantity=10.0, price=30.0)
-    print(balances)
+    pairs = c.get_pairs()
+    print(pairs)

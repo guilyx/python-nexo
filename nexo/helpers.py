@@ -1,5 +1,7 @@
 import re
-# temp: use regex!
+from typing import Dict
+import json
+
 def check_pair_validity(pair: str)-> bool:
     assets = pair.split("/")
 
@@ -14,3 +16,6 @@ def check_pair_validity(pair: str)-> bool:
             return False
 
     return True
+
+def compact_json_dict(data: Dict):
+    return json.dumps(data, separators=(',', ':'), ensure_ascii=False)
