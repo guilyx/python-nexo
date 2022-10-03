@@ -120,14 +120,14 @@ class Client(BaseClient):
 
     @staticmethod
     def _handle_response(response: requests.Response):
-        """Internal helper for handling API responses from the Binance server.
-        Raises the appropriate exceptions when necessary; otherwise, returns the
-        response.
-        """
-        if not response.ok:
-            raise NexoRequestException("Failed to get API response: %s" % response.status_code)
+        json_response = {}
 
-        json_response = response.json()
+        try:
+            json_response = response.json()
+        except:
+            if not response.ok:
+                raise NexoRequestException("Failed to get API response: %s" % response.status_code)
+
         try:
             if "errorCode" in json_response:
                 if json_response["errorCode"] in NEXO_API_ERROR_CODES:
