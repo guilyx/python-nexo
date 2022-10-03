@@ -1,0 +1,16 @@
+version: '2'
+services:
+    python-nexo:
+        build:
+            context: ..
+            dockerfile: ./docker/Dockerfile
+        volumes:
+            - ../:/python-nexo
+        ports:
+            - 8080
+        environment:
+            - ENV=dev
+            - TESTING
+            - LOG_LEVEL
+            - NEXO_PUBLIC_KEY
+            - NEXO_SECRET_KEY
