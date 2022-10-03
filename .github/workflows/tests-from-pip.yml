@@ -1,13 +1,6 @@
 name: tests-from-pip-package
 
-on:
-  push:
-    paths:
-      - '*.py'
-  pull_request:
-    paths:
-      - '*.py'
-  workflow_dispatch:
+on: [push]
 
 jobs:
   test:

@@ -1,13 +1,6 @@
 name: tests-from-repository
 
-on:
-  push:
-    paths:
-      - '*.py'
-  pull_request:
-    paths:
-      - '*.py'
-  workflow_dispatch:
+on: [push]
 
 jobs:
   test:
