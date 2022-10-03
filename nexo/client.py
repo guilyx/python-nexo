@@ -124,7 +124,7 @@ class Client(BaseClient):
 
         try:
             json_response = response.json()
-        except:
+        except Exception:
             if not response.ok:
                 raise NexoRequestException("Failed to get API response: %s" % response.status_code)
 
