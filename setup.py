@@ -19,7 +19,7 @@ with codecs.open(
     except IndexError:
         raise RuntimeError('Unable to determine version.')
 
-with open("README.rst", "r") as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
@@ -28,7 +28,7 @@ setup(
     packages=['nexo'],
     description='Nexo Pro REST API python implementation',
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     url='https://github.com/guilyx/python-nexo',
     author='Erwin Lejeune',
     license='MIT',
