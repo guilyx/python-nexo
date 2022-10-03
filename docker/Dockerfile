@@ -10,7 +10,7 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends wget && \
     apt-get install -y --no-install-recommends git && \
     apt-get install -y --no-install-recommends python3-pytest && \
-    python3 -m pip install --upgrade pip && \
+    python3 -m pip install --no-cache-dir --upgrade pip && \
     apt-get install -y --no-install-recommends python3-dotenv && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
