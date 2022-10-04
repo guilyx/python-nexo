@@ -134,8 +134,12 @@ class Client(BaseClient):
                     raise NexoAPIException(json_response["errorCode"], response.text)
                 else:
                     raise NexoRequestException(
-                        f'Invalid Response: status: {json_response["errorCode"]}, message: {json_response["errorMessage"]}'
+                        f'Invalid Response: status: {json_response["errorCode"]}, message: {json_response["errorMessage"]}\n body: {response.request.body}'
                     )
+            else:
+                if not response.ok:
+                    raise NexoRequestException(f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}")
+
             return json_response
         except ValueError:
             raise NexoRequestException("Invalid Response: %s" % json_response)
@@ -202,7 +206,7 @@ class Client(BaseClient):
         exchanges: str = None,
         serialize_json_to_object: bool = False,
     ) -> Dict:
-        if side != "buy" and "sell":
+        if side != "buy" and side != "sell":
             raise NexoRequestException(
                 f"Bad Request: Tried to get price quote with side = {side}, side must be 'buy' or 'sell'"
             )
@@ -249,7 +253,11 @@ class Client(BaseClient):
     def get_order_details(
         self, id: str, serialize_json_to_object: bool = False
     ) -> Dict:
-        order_details_json = self._get(f"orderDetails/{id}")
+        data = {
+            "id": id,
+        }
+
+        order_details_json = self._get(f"orderDetails", data=data)
 
         if serialize_json_to_object:
             return OrderDetails(order_details_json)
@@ -268,7 +276,7 @@ class Client(BaseClient):
         for pair in pairs:
             if not check_pair_validity(pair):
                 raise NexoRequestException(
-                    f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                    f"Bad Request: Tried to get trade history with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
                 )
 
         data = {
@@ -289,7 +297,12 @@ class Client(BaseClient):
     def get_transaction_info(
         self, transaction_id: str, serialize_json_to_object: bool = False
     ) -> Dict:
-        transaction_json = self._get(f"transaction/{transaction_id}")
+
+        data = {
+            "transactionId": transaction_id
+        }
+
+        transaction_json = self._get(f"transaction", data=data)
 
         if serialize_json_to_object:
             return Transaction(transaction_json)
@@ -305,17 +318,17 @@ class Client(BaseClient):
         price: float = None,
         serialize_json_to_object: bool = False,
     ) -> Dict:
-        if side != "buy" and "sell":
+        if side != "buy" and side != "sell":
             raise NexoRequestException(
                 f"Bad Request: Tried to place an order with side = {side}, side must be 'buy' or 'sell'"
             )
-        if type != "market" and "limit":
+        if type != "market" and type != "limit":
             raise NexoRequestException(
                 f"Bad Request: Tried to place an order with type = {type}, side must be 'market' or 'limit'"
             )
         if not check_pair_validity(pair):
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                f"Bad Request: Tried to place an order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
             )
 
         data = {"pair": pair, "side": side, "type": type, "quantity": quantity}
@@ -341,13 +354,13 @@ class Client(BaseClient):
         trailing_percentage: float = None,
         serialize_json_to_object: bool = False,
     ) -> Dict:
-        if side != "buy" and "sell":
+        if side != "buy" and side != "sell":
             raise NexoRequestException(
                 f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
             )
-        if trigger_type != "stopLoss" and "takeProfit" and "trailing":
+        if trigger_type != "stopLoss" and trigger_type != "takeProfit" and trigger_type != "trailing":
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with type = {trigger_type}, side must be 'market' or 'limit'"
+                f"Bad Request: Tried to place a trigger order with trigger type = {trigger_type}, trigger type must be 'stopLoss' or 'takeProfit' or 'trailing'"
             )
         if not check_pair_validity(pair):
             raise NexoRequestException(
@@ -384,14 +397,14 @@ class Client(BaseClient):
         take_profit_price: str,
         serialize_json_to_object: bool = False,
     ) -> Dict:
-        if side != "buy" and "sell":
+        if side != "buy" and side != "sell":
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
+                f"Bad Request: Tried to place an advanced order with side = {side}, side must be 'buy' or 'sell'"
             )
 
         if not check_pair_validity(pair):
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                f"Bad Request: Tried to place an advanced order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
             )
 
         data = {
@@ -418,14 +431,14 @@ class Client(BaseClient):
         exchanges: List[str] = None,
         serialize_json_to_object: bool = False,
     ) -> Dict:
-        if side != "buy" and "sell":
+        if side != "buy" and side != "sell":
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
+                f"Bad Request: Tried to place a twap order with side = {side}, side must be 'buy' or 'sell'"
             )
 
         if not check_pair_validity(pair):
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                f"Bad Request: Tried to place a twap order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
             )
 
         data = {
