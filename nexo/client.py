@@ -276,7 +276,7 @@ class Client(BaseClient):
         for pair in pairs:
             if not check_pair_validity(pair):
                 raise NexoRequestException(
-                    f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                    f"Bad Request: Tried to get trade history with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
                 )
 
         data = {
@@ -322,13 +322,13 @@ class Client(BaseClient):
             raise NexoRequestException(
                 f"Bad Request: Tried to place an order with side = {side}, side must be 'buy' or 'sell'"
             )
-        if type != "market" and "limit":
+        if type != "market" and type != "limit":
             raise NexoRequestException(
                 f"Bad Request: Tried to place an order with type = {type}, side must be 'market' or 'limit'"
             )
         if not check_pair_validity(pair):
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                f"Bad Request: Tried to place an order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
             )
 
         data = {"pair": pair, "side": side, "type": type, "quantity": quantity}
@@ -358,7 +358,7 @@ class Client(BaseClient):
             raise NexoRequestException(
                 f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
             )
-        if trigger_type != "stopLoss" and "takeProfit" and "trailing":
+        if trigger_type != "stopLoss" and trigger_type != "takeProfit" and trigger_type != "trailing":
             raise NexoRequestException(
                 f"Bad Request: Tried to place a trigger order with type = {trigger_type}, side must be 'market' or 'limit'"
             )
@@ -399,12 +399,12 @@ class Client(BaseClient):
     ) -> Dict:
         if side != "buy" and side != "sell":
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
+                f"Bad Request: Tried to place an advanced order with side = {side}, side must be 'buy' or 'sell'"
             )
 
         if not check_pair_validity(pair):
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                f"Bad Request: Tried to place an advanced order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
             )
 
         data = {
@@ -433,12 +433,12 @@ class Client(BaseClient):
     ) -> Dict:
         if side != "buy" and side != "sell":
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
+                f"Bad Request: Tried to place a twap order with side = {side}, side must be 'buy' or 'sell'"
             )
 
         if not check_pair_validity(pair):
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+                f"Bad Request: Tried to place a twap order with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
             )
 
         data = {
