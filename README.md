@@ -30,7 +30,9 @@
 
 This is an unofficial Python wrapper for the Nexo Pro exchange REST API v1. I am in no way affiliated with Nexo, use at your own risk.
 
-If you came here looking for the Nexo exchange to purchase cryptocurrencies, then go here. If you want to automate interactions with Nexo, stick around.
+If you came here looking for the Nexo exchange to purchase cryptocurrencies, then go to the official Nexo website. If you want to automate interactions with Nexo, stick around.
+
+[Click here to register a Nexo account](https://nexo.io/ref/vaqo55u5py?src=web-link)
 
 Heavily influenced by [python-binance](https://github.com/sammchardy/python-binance)
 
@@ -45,7 +47,7 @@ See it on Issue https://github.com/guilyx/python-nexo/issues/2
 
 ## Preparation 🔎
 
-- Register a Nexo Account.
+- Register a Nexo Account. [here](https://nexo.io/ref/vaqo55u5py?src=web-link)
 - Generate an API Key in Nexo Pro with the permissions you want.
 
 ## Set it up 💾
