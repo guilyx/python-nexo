@@ -360,7 +360,7 @@ class Client(BaseClient):
             )
         if trigger_type != "stopLoss" and trigger_type != "takeProfit" and trigger_type != "trailing":
             raise NexoRequestException(
-                f"Bad Request: Tried to place a trigger order with type = {trigger_type}, side must be 'market' or 'limit'"
+                f"Bad Request: Tried to place a trigger order with trigger type = {trigger_type}, trigger type must be 'stopLoss' or 'takeProfit' or 'trailing'"
             )
         if not check_pair_validity(pair):
             raise NexoRequestException(
