@@ -36,6 +36,8 @@ If you came here looking for the Nexo exchange to purchase cryptocurrencies, the
 
 Heavily influenced by [python-binance](https://github.com/sammchardy/python-binance)
 
+You can check which endpoints are currently functional [here](https://github.com/guilyx/python-nexo/blob/master/docs/endpoints.md)
+
 - ✨ Work in Progress
 - 🎌 Built with Python
 - 🐋 Docker Available
@@ -44,6 +46,7 @@ Heavily influenced by [python-binance](https://github.com/sammchardy/python-bina
 ## Roadmap 🌱
 
 See it on Issue https://github.com/guilyx/python-nexo/issues/2
+Checkout the [Changelog](https://github.com/guilyx/python-nexo/blob/master/docs/changelog.md)
 
 ## Preparation 🔎
 
