@@ -7,6 +7,8 @@ import nexo
 import os
 from dotenv import load_dotenv
 
+import time
+
 load_dotenv()
 
 key = os.getenv("NEXO_PUBLIC_KEY")

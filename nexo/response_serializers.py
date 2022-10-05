@@ -71,17 +71,18 @@ class OrderResponse(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
         super().__init__(json_dictionary)
 
-        if "dealId" in json_dictionary:
-            self.deal_id = json_dictionary["dealId"]
+        if "orderId" in json_dictionary:
+            self.order_id = json_dictionary["orderId"]
 
 
 # POST /orders/twap
 class AdvancedOrderResponse(BaseSerializedResponse):
     def __init__(self, json_dictionary: Dict):
-        if "dealId" in json_dictionary:
-            super().__init__(json_dictionary)
+        super().__init__(json_dictionary)
 
-            self.deal_id = json_dictionary["dealId"]
+        if "orderId" in json_dictionary:
+            self.order_id = json_dictionary["orderId"]
+
         if "amount" in json_dictionary:
             self.amount = json_dictionary["amount"]
 
