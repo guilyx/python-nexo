@@ -103,9 +103,11 @@ def test_pairs():
 
     pairs = Pairs(pairs_json)
 
+    with pytest.raises(AttributeError):
+        assert(pairs.min_limits == {'BNB/USDT': 0.355, 'MKR_BTC': 0.002})
 
-    assert(pairs.min_limits == {'BNB/USDT': 0.355, 'MKR_BTC': 0.002})
-    assert(pairs.max_limits == {'BNB/USDT': 3435.5, 'MKR_BTC': 42.4})
+    with pytest.raises(AttributeError):
+        assert(pairs.max_limits == {'BNB/USDT': 3435.5, 'MKR_BTC': 42.4})
 
 def test_quote():
     quote_json = {
