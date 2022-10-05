@@ -205,14 +205,14 @@ def test_order_details():
     assert(order_details.trades[0].timestamp == 1314242424)
     assert(order_details.trades[0].status == "completed")
 
-    assert(order_details.trades[0].id == "237")
-    assert(order_details.trades[0].symbol == "NEXO/USDT")
-    assert(order_details.trades[0].type == "market")
-    assert(order_details.trades[0].order_amount == "100")
-    assert(order_details.trades[0].amount_filled == "100")
-    assert(order_details.trades[0].executed_price == "1.324")
-    assert(order_details.trades[0].timestamp == 1314242424)
-    assert(order_details.trades[0].status == "completed")
+    assert(order_details.trades[1].id == "237")
+    assert(order_details.trades[1].symbol == "NEXO/USDT")
+    assert(order_details.trades[1].type == "market")
+    assert(order_details.trades[1].order_amount == "100")
+    assert(order_details.trades[1].amount_filled == "100")
+    assert(order_details.trades[1].executed_price == "1.324")
+    assert(order_details.trades[1].timestamp == 1314242424)
+    assert(order_details.trades[1].status == "completed")
 
     with pytest.raises(AttributeError):
         assert(order_details.random == "random")
