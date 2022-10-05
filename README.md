@@ -26,6 +26,12 @@
 
 </div>
 
+## About Nexo 💸
+
+Nexo is a crypto lending platform that lets you borrow crypto or cash by placing your crypto as collateral. They offer high APY on holdings based on loyalty tier (the more Nexo token you hold the higher your tier). You can earn your interests in the same kind of your holding or as Nexo tokens. As an example, stablecoins can earn up to 12% APY. Bitcoin and Ethereum, 8%. 
+
+Unfortunately, Nexo doesn't offer some automated way of buying periodically. All you can do is setup a bank transfer and then convert/buy manually. This API Wrapper aims to offer a way of automating your purchases. You'd just have to setup your periodic bank transfer to Nexo, and then buy at spot price the coins that you want in an automated way by using the wrapped API calls.
+
 ## Description 📰
 
 This is an unofficial Python wrapper for the Nexo Pro exchange REST API v1. I am in no way affiliated with Nexo, use at your own risk.
