@@ -222,7 +222,9 @@ def test_order_details():
     assert(order_details.exchange_rate == "100")
     assert(order_details.exchange_quantity == "1.324")
     assert(order_details.timestamp == 1314242424)
-    assert(order_details.status == "completed")
 
     with pytest.raises(AttributeError):
         assert(order_details.random == "random")
+
+    with pytest.raises(AttributeError):
+        assert(order_details.status == "completed")
