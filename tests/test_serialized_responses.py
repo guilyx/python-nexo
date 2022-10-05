@@ -120,4 +120,4 @@ def test_quote():
     assert(quote.pair == 'BNB/USDT')
     assert(quote.amount == '1000.0')
     assert(quote.price == '10.0')
-    assert(quote.timestamp == 123424243)
+    assert(quote.timestamp == "123424243")
