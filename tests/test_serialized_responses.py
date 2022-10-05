@@ -114,7 +114,8 @@ def test_quote():
         'pair': 'BNB/USDT',
         'amount': "1000.0",
         'price': "10.0",
-        'timestamp': "123424243"
+        'timestamp': "123424243",
+        'random': "34343"
     }
     
     quote = Quote(quote_json)
@@ -123,3 +124,105 @@ def test_quote():
     assert(quote.amount == '1000.0')
     assert(quote.price == '10.0')
     assert(quote.timestamp == "123424243")
+
+    with pytest.raises(AttributeError):
+        assert(quote.random == "34343")
+
+
+def test_trade_for_order():
+    trade_json = {
+        "id": "234",
+        "symbol": "NEXO/USDT",
+        "type": "market",
+        "orderAmount": "100",
+        "amountFilled": "100",
+        "executedPrice": "1.324",
+        "timestamp": 1314242424,
+        "status": "completed",
+        "random": "random"
+    }
+
+    trade = TradeForOrder(trade_json)
+
+    assert(trade.id == "234")
+    assert(trade.symbol == "NEXO/USDT")
+    assert(trade.type == "market")
+    assert(trade.order_amount == "100")
+    assert(trade.amount_filled == "100")
+    assert(trade.executed_price == "1.324")
+    assert(trade.timestamp == 1314242424)
+    assert(trade.status == "completed")
+
+    with pytest.raises(AttributeError):
+        assert(trade.random == "random")
+
+def test_order_details():
+    order_det_json = {
+        "id": "234",
+        "pair": "NEXO/USDT",
+        "side": "buy",
+        "quantity": "100",
+        "exchangeRate": "100",
+        "exchangeQuantity": "1.324",
+        "timestamp": 1314242424,
+        "status": "completed",
+        "random": "random",
+        "trades": [
+            {
+                "id": "234",
+                "symbol": "NEXO/USDT",
+                "type": "market",
+                "orderAmount": "100",
+                "amountFilled": "100",
+                "executedPrice": "1.324",
+                "timestamp": 1314242424,
+                "status": "completed",
+                "random": "random"
+            },
+            {
+                "id": "237",
+                "symbol": "NEXO/USDT",
+                "type": "market",
+                "orderAmount": "100",
+                "amountFilled": "100",
+                "executedPrice": "1.324",
+                "timestamp": 1314242424,
+                "status": "completed",
+                "random": "random"
+            }
+        ]
+    }
+
+    order_details = OrderDetails(order_det_json)
+
+    assert(len(order_details.trades) == 2)
+    assert(order_details.trades[0].id == "234")
+    assert(order_details.trades[0].symbol == "NEXO/USDT")
+    assert(order_details.trades[0].type == "market")
+    assert(order_details.trades[0].order_amount == "100")
+    assert(order_details.trades[0].amount_filled == "100")
+    assert(order_details.trades[0].executed_price == "1.324")
+    assert(order_details.trades[0].timestamp == 1314242424)
+    assert(order_details.trades[0].status == "completed")
+
+    assert(order_details.trades[0].id == "237")
+    assert(order_details.trades[0].symbol == "NEXO/USDT")
+    assert(order_details.trades[0].type == "market")
+    assert(order_details.trades[0].order_amount == "100")
+    assert(order_details.trades[0].amount_filled == "100")
+    assert(order_details.trades[0].executed_price == "1.324")
+    assert(order_details.trades[0].timestamp == 1314242424)
+    assert(order_details.trades[0].status == "completed")
+
+    with pytest.raises(AttributeError):
+        assert(order_details.random == "random")
+
+    assert(order_details.id == "234")
+    assert(order_details.side == "buy")
+    assert(order_details.exchange_rate == "100")
+    assert(order_details.exchange_quantity == "1.324")
+    assert(order_details.timestamp == 1314242424)
+    assert(order_details.status == "completed")
+
+    with pytest.raises(AttributeError):
+        assert(order_details.random == "random")
