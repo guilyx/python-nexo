@@ -6,6 +6,22 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from nexo.response_serializers import *
 import pytest
 
+def test_base_class():
+    balances_json = {
+        'balances': [
+            {
+                'assetName': 'BTC', 
+                'totalBalance': '0.00000000', 
+                'availableBalance': '0.00000000', 
+                'lockedBalance': '0.00000000', 
+                'debt': '0.00000000', 
+                'interest': '0.00000000'
+            }
+        ]
+    }
+    base = BaseSerializedResponse(balances_json)
+    assert(str(base) == str(balances_json))
+
 def test_balances():
     balances_json = {
         'balances': [
@@ -88,8 +104,20 @@ def test_pairs():
     pairs = Pairs(pairs_json)
 
 
-    with pytest.raises(AttributeError):
-        assert(pairs.min_limits == {'BNB/USDT': 0.355, 'MKR_BTC': 0.002})
+    assert(pairs.min_limits == {'BNB/USDT': 0.355, 'MKR_BTC': 0.002})
+    assert(pairs.max_limits == {'BNB/USDT': 3435.5, 'MKR_BTC': 42.4})
+
+def test_quote():
+    quote_json = {
+        'pair': 'BNB/USDT',
+        'amount': "1000.0",
+        'price': "10.0",
+        'timestamp': "123424243"
+    }
     
-    with pytest.raises(AttributeError):
-        assert(pairs.max_limits == {'BNB/USDT': 3435.5, 'MKR_BTC': 42.4})
+    quote = Quote(quote_json)
+
+    assert(quote.pair == 'BNB/USDT')
+    assert(quote.amount == '1000.0')
+    assert(quote.price == '10.0')
+    assert(quote.timestamp == 123424243)
