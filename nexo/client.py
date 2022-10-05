@@ -69,51 +69,6 @@ class BaseClient:
         )
         return base64.b64encode(m.digest())
 
-    @staticmethod
-    def _order_params(data: Dict) -> List[Tuple[str, str]]:
-        """Convert params to list
-        :param data:
-        :return:
-        """
-        data = dict(filter(lambda el: el[1] is not None, data.items()))
-        params = []
-        for key, value in data.items():
-            params.append((key, str(value)))
-        # sort parameters by key
-        params.sort(key=itemgetter(0))
-        return params
-
-    def _get_request_kwargs(self, method, force_params: bool = False, **kwargs) -> Dict:
-
-        # set default requests timeout
-        # kwargs['timeout'] = self.REQUEST_TIMEOUT
-
-        data = kwargs.get("data", None)
-
-        if data and isinstance(data, dict):
-            kwargs["data"] = data
-
-        # sort get and post params to match signature order
-        if data:
-            # sort post params and remove any arguments with values of None
-            kwargs["data"] = self._order_params(kwargs["data"])
-            # Remove any arguments with values of None.
-            null_args = [
-                i for i, (_, value) in enumerate(kwargs["data"]) if value is None
-            ]
-            for i in reversed(null_args):
-                del kwargs["data"][i]
-
-        # if get request assign data array to params value for requests lib
-        if data and (method == "get" or force_params):
-            kwargs["params"] = "&".join(
-                "%s=%s" % (data[0], data[1]) for data in kwargs["data"]
-            )
-            del kwargs["data"]
-
-        return kwargs
-
-
 class Client(BaseClient):
     def __init__(self, api_key, api_secret):
         super().__init__(api_key, api_secret)
@@ -126,7 +81,7 @@ class Client(BaseClient):
             json_response = response.json()
         except Exception:
             if not response.ok:
-                raise NexoRequestException("Failed to get API response: %s" % response.status_code)
+                raise NexoRequestException(f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}")
 
         try:
             if "errorCode" in json_response:
@@ -139,10 +94,12 @@ class Client(BaseClient):
             else:
                 if not response.ok:
                     raise NexoRequestException(f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}")
+                
+                return json_response
 
-            return json_response
         except ValueError:
             raise NexoRequestException("Invalid Response: %s" % json_response)
+    
 
     def _request(
         self, method, path: str, version=BaseClient.PUBLIC_API_VERSION, **kwargs
