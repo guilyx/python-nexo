@@ -14,15 +14,13 @@ pull_request_rules:
       - check-success=lint (macos-latest, 3.7)
       - check-success=test (macos-latest, 3.7)
       - check-success=lint (macos-latest, 3.8)
-      - check-success=test (macos-latest, 3.8)
-      
+      - check-success=test (macos-latest, 3.8)      
       - check-success=lint (ubuntu-latest, 3.6)
       - check-success=test (ubuntu-latest, 3.6)
       - check-success=lint (ubuntu-latest, 3.7)
       - check-success=test (ubuntu-latest, 3.7)
       - check-success=lint (ubuntu-latest, 3.8)
       - check-success=test (ubuntu-latest, 3.8)
-      
       - check-success=CodeFactor
     actions:
       merge:
