@@ -11,7 +11,7 @@ pull_request_rules:
     conditions:
       - "#approved-reviews-by>=1"
       - check-success=lint
-      - check-success=tests-from-repo
+      - check-success=tests
       - check-success=CodeFactor
     actions:
       merge:
