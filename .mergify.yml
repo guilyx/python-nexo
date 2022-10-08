@@ -6,25 +6,6 @@ pull_request_rules:
       request_reviews:
         users:
           - guilyx
-  - name: Automatic merge on approval
-    conditions:
-      - approved-reviews-by>=1
-      - check-success=lint (macos-latest, 3.6)
-      - check-success=test (macos-latest, 3.6)
-      - check-success=lint (macos-latest, 3.7)
-      - check-success=test (macos-latest, 3.7)
-      - check-success=lint (macos-latest, 3.8)
-      - check-success=test (macos-latest, 3.8)
-      - check-success=lint (ubuntu-latest, 3.6)
-      - check-success=test (ubuntu-latest, 3.6)
-      - check-success=lint (ubuntu-latest, 3.7)
-      - check-success=test (ubuntu-latest, 3.7)
-      - check-success=lint (ubuntu-latest, 3.8)
-      - check-success=test (ubuntu-latest, 3.8)
-      - check-success=CodeFactor
-    actions:
-      merge:
-        method: merge
   - name: Delete head branch after merge
     conditions:
       - merged
