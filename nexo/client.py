@@ -69,6 +69,7 @@ class BaseClient:
         )
         return base64.b64encode(m.digest())
 
+
 class Client(BaseClient):
     def __init__(self, api_key, api_secret):
         super().__init__(api_key, api_secret)
@@ -81,7 +82,9 @@ class Client(BaseClient):
             json_response = response.json()
         except Exception:
             if not response.ok:
-                raise NexoRequestException(f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}")
+                raise NexoRequestException(
+                    f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}"
+                )
 
         try:
             if "errorCode" in json_response:
@@ -93,13 +96,14 @@ class Client(BaseClient):
                     )
             else:
                 if not response.ok:
-                    raise NexoRequestException(f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}")
-                
+                    raise NexoRequestException(
+                        f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}"
+                    )
+
                 return json_response
 
         except ValueError:
             raise NexoRequestException("Invalid Response: %s" % json_response)
-    
 
     def _request(
         self, method, path: str, version=BaseClient.PUBLIC_API_VERSION, **kwargs
@@ -255,9 +259,7 @@ class Client(BaseClient):
         self, transaction_id: str, serialize_json_to_object: bool = False
     ) -> Dict:
 
-        data = {
-            "transactionId": transaction_id
-        }
+        data = {"transactionId": transaction_id}
 
         transaction_json = self._get(f"transaction", data=data)
 
@@ -315,7 +317,11 @@ class Client(BaseClient):
             raise NexoRequestException(
                 f"Bad Request: Tried to place a trigger order with side = {side}, side must be 'buy' or 'sell'"
             )
-        if trigger_type != "stopLoss" and trigger_type != "takeProfit" and trigger_type != "trailing":
+        if (
+            trigger_type != "stopLoss"
+            and trigger_type != "takeProfit"
+            and trigger_type != "trailing"
+        ):
             raise NexoRequestException(
                 f"Bad Request: Tried to place a trigger order with trigger type = {trigger_type}, trigger type must be 'stopLoss' or 'takeProfit' or 'trailing'"
             )
@@ -415,3 +421,67 @@ class Client(BaseClient):
             return AdvancedOrderResponse(twap_order_json)
 
         return twap_order_json
+
+    def cancel_order(self, order_id: str):
+        data = {"orderId": order_id}
+
+        return self._post("orders/cancel", data=data)
+
+    def cancel_all_orders(self, pair: str):
+        if not check_pair_validity(pair):
+            raise NexoRequestException(
+                f"Bad Request: Tried to cancel all orders with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
+            )
+
+        data = {"pair": pair}
+
+        return self._post("orders/cancel/all", data=data)
+
+    def get_all_future_instruments(self):
+        return self._get("futures/instruments")
+
+    def get_future_positions(self, status: str):
+        if status != "any" and status != "active" and status != "inactive":
+            raise NexoRequestException(
+                f"Bad Request: Tried to get future positions with status = {status}, status must be 'any', 'active' or 'inactive'"
+            )
+
+        data = {"status": status}
+
+        return self._get("futures/positions", data=data)
+
+    def place_future_order(
+        self,
+        instrument: str,
+        position_action: str,
+        position_side: str,
+        type: str,
+        quantity: float,
+    ):
+        if position_action != "open" and position_action != "close":
+            raise NexoRequestException(
+                f"Bad Request: Tried to place future position with position action = {position_action}, must be 'open' or 'close'"
+            )
+
+        if position_side != "long" and position_side != "short":
+            raise NexoRequestException(
+                f"Bad Request: Tried to place future position with position side = {position_side}, must be 'long' or 'short'"
+            )
+
+        if type != "market":
+            raise NexoRequestException(
+                f"Bad Request: Tried to place future position with type = {type}, must be 'market'"
+            )
+
+        data = {
+            "positionAction": position_action,
+            "instrument": instrument,
+            "positionSide": position_side,
+            "type": type,
+            "quantity": quantity,
+        }
+
+        return self._post("futures/order", data=data)
+
+    def close_all_future_positions(self):
+        return self._post("futures/close-all-positions")

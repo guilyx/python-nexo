@@ -36,6 +36,18 @@ client.get_price_quote(pair="BTC/ETH", amount="1.0", side="buy")
 client.place_order(pair="BTC/ETH", quantity="1.0", side="buy")
 ```
 
+* **POST** /api/v1/orders/cancel (Cancels an order.) ✔️
+
+```python3
+def cancel_order(self, "8037298b-3ba4-41f9-8718-8a7bf87560f6")
+```
+
+* **POST** /api/v1/orders/cancel/all (Cancels all orders for a pair) ✔️
+
+```python3
+def cancel_all_orders(self, "ETH/USDT")
+```
+
 * **POST** /api/v1/orders/trigger (Places a trigger order.) ✔️
 
 ```python3
@@ -78,4 +90,30 @@ client.get_trade_history(pairs=["BTC/ETH", "BTC/USDT"], start_date="123242424242
 
 ```python3
 client.get_price_quote(transaction_id="22442")
+```
+
+### Futures
+
+* **GET** /api/v1/futures/instruments (Retrieves futures instruments) ✔️
+
+```python3
+client.get_all_future_instruments()
+```
+
+* **GET** /api/v1/futures/positions (Retrieves futures positions) ✔️
+
+```python3
+client.get_future_positions(status="any")
+```
+
+* **POST** /api/v1/futures/order (Places a futures order) ✔️
+
+```python3
+client.place_future_order()
+```
+
+* **POST** /api/v1/future/close-all-positions (Closes all future positions) ❌
+
+```python3
+client.close_all_future_positions()
 ```
