@@ -45,26 +45,23 @@ def test_pair_validity_lower_upper_case_mix():
     pair = "usdc/BAHIO"
     assert check_pair_validity(pair) == False
 
+
 def test_dict_jsonifier_simple():
-    dict = {
-        "foo": "bar",
-        "bar": "foo"
-    }
+    dict = {"foo": "bar", "bar": "foo"}
     json = compact_json_dict(dict)
     expected_json = '{"foo":"bar","bar":"foo"}'
-    assert(json == expected_json)
+    assert json == expected_json
+
 
 def test_dict_jsonifier_double():
-    dict = {
-        "foo": 2.0,
-        "bar": "foo"
-    }
+    dict = {"foo": 2.0, "bar": "foo"}
     json = compact_json_dict(dict)
     expected_json = '{"foo":2.0,"bar":"foo"}'
-    assert(json == expected_json)
+    assert json == expected_json
+
 
 def test_dict_jsonifier_empty():
     dict = {}
     json = compact_json_dict(dict)
-    expected_json = '{}'
-    assert(json == expected_json)
+    expected_json = "{}"
+    assert json == expected_json
