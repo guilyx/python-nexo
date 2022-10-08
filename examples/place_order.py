@@ -26,3 +26,8 @@ print(order)
 # Sells 0.03 ETH for USDT at limit price 2000 USDT
 order_resp = client.place_order("ETH/USDT", "sell", "limit", "0.03", "1500", serialize_json_to_object=True)
 print(order_resp)
+
+cancel_order = client.cancel_all_orders("ETH/USDT")
+print(cancel_order)
+
+print(client.cancel_order("kerar"))

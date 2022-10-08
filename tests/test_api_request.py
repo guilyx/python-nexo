@@ -179,5 +179,3 @@ def test_place_advanced_order_healthy():
     time.sleep(1.1)
     assert(e.value.code == 100)
     assert(str(e.value) == "APIError(code=100): API Key doesn't exist, API-Key is malformed or invalid.")
-
-    
