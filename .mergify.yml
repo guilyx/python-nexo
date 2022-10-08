@@ -1,4 +1,3 @@
-
 pull_request_rules:
   - name: Assign the main reviewers
     conditions:
@@ -7,15 +6,6 @@ pull_request_rules:
       request_reviews:
         users:
           - guilyx
-  - name: Automatic merge on approval
-    conditions:
-      - "#approved-reviews-by>=1"
-      - check-success=lint
-      - check-success=tests-from-repo
-      - check-success=CodeFactor
-    actions:
-      merge:
-        method: merge
   - name: Delete head branch after merge
     conditions:
       - merged
