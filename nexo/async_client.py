@@ -7,6 +7,7 @@ import asyncio
 import json
 import time
 
+from nexo.exceptions import NexoAPIException, NEXO_API_ERROR_CODES, NexoRequestException
 from nexo.helpers import check_pair_validity, compact_json_dict
 from nexo.response_serializers import (
     Balances,
