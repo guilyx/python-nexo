@@ -487,31 +487,39 @@ class Client(BaseClient):
         return self._post("futures/close-all-positions")
 
 
-def AsyncClient(BaseClient):
-    def __init__(self, api_key, api_secret):
+class AsyncClient(BaseClient):
+
+    def __init__(self, api_key, api_secret, loop=None):
         self.loop = loop or asyncio.get_event_loop()
         super().__init__(api_key, api_secret)
-
+        self._init_session()
 
     @classmethod
-    async def create(cls, api_key, api_secret, loop=None):
-        self._init_session()
+    async def create(cls, api_key=None, api_secret=None, loop=None):
         return cls(api_key, api_secret, loop)
 
-
     def _init_session(self):
-        self.session = aiohttp.ClientSession(loop=self.loop)
+        session = aiohttp.ClientSession(loop=self.loop)
+        headers = {
+            "Accept": "application/json",
+            "User-Agent": "python-nexo",
+            "Content-Type": "application/json",
+            "X-API-KEY": self.API_KEY,
+        }
+        session.headers.update(headers)
+
+        self.session = session
 
     async def close_connection(self):
         if self.session:
             assert self.session
             await self.session.close()
     
-    async def _handle_response(response: aiohttp.ClientResponse):
+    async def _handle_response(self, response: aiohttp.ClientResponse):
         json_response = {}
 
         try:
-            json_response = response.json()
+            json_response = await response.json()
         except Exception:
             if not response.ok:
                 raise NexoRequestException(
@@ -521,7 +529,7 @@ def AsyncClient(BaseClient):
         try:
             if "errorCode" in json_response:
                 if json_response["errorCode"] in NEXO_API_ERROR_CODES:
-                    raise NexoAPIException(json_response["errorCode"], response.text)
+                    raise NexoAPIException(json_response["errorCode"], await response.text())
                 else:
                     raise NexoRequestException(
                         f'Invalid Response: status: {json_response["errorCode"]}, message: {json_response["errorMessage"]}\n body: {response.request.body}'
@@ -532,7 +540,7 @@ def AsyncClient(BaseClient):
                         f"Failed to get API response: \nCode: {response.status_code}\nRequest: {str(response.request.body)}"
                     )
 
-                return await json_response
+                return json_response
 
         except ValueError:
             raise NexoRequestException("Invalid Response: %s" % json_response)
@@ -551,7 +559,7 @@ def AsyncClient(BaseClient):
 
         nonce = str(int(time.time() * 1000))
         kwargs["headers"]["X-NONCE"] = nonce
-        kwargs["headers"]["X-SIGNATURE"] = self._generate_signature(nonce)
+        kwargs["headers"]["X-SIGNATURE"] = self._generate_signature(nonce).decode('utf8')
 
         if kwargs["data"] and method == "get":
             kwargs["params"] = kwargs["data"]
