@@ -1,14 +1,12 @@
 from nexo.base_client import BaseClient
 from typing import Dict, Optional, List, Tuple
-import hmac
-import hashlib
+
 from operator import itemgetter
-import base64
-import urllib3
-import requests
+import aiohttp
+import asyncio
 import json
 import time
-from nexo.exceptions import NexoAPIException, NEXO_API_ERROR_CODES, NexoRequestException
+
 from nexo.helpers import check_pair_validity, compact_json_dict
 from nexo.response_serializers import (
     Balances,
@@ -22,30 +20,39 @@ from nexo.response_serializers import (
     TradeHistory,
 )
 
-class Client(BaseClient):
-    def __init__(self, api_key, api_secret):
+
+class AsyncClient(BaseClient):
+    def __init__(self, api_key, api_secret, loop=None):
+        self.loop = loop or asyncio.get_event_loop()
         super().__init__(api_key, api_secret)
-        self.session = self._init_session()
+        self._init_session()
+
+    @classmethod
+    async def create(cls, api_key=None, api_secret=None, loop=None):
+        return cls(api_key, api_secret, loop)
 
     def _init_session(self):
-
-        session = requests.session()
+        session = aiohttp.ClientSession(loop=self.loop)
         headers = {
             "Accept": "application/json",
             "User-Agent": "python-nexo",
             "Content-Type": "application/json",
             "X-API-KEY": self.API_KEY,
         }
-
         session.headers.update(headers)
-        return session
 
-    @staticmethod
-    def _handle_response(response: requests.Response):
+        self.session = session
+
+    async def close_connection(self):
+        if self.session:
+            assert self.session
+            await self.session.close()
+
+    async def _handle_response(self, response: aiohttp.ClientResponse):
         json_response = {}
 
         try:
-            json_response = response.json()
+            json_response = await response.json()
         except Exception:
             if not response.ok:
                 raise NexoRequestException(
@@ -55,7 +62,9 @@ class Client(BaseClient):
         try:
             if "errorCode" in json_response:
                 if json_response["errorCode"] in NEXO_API_ERROR_CODES:
-                    raise NexoAPIException(json_response["errorCode"], response.text)
+                    raise NexoAPIException(
+                        json_response["errorCode"], await response.text()
+                    )
                 else:
                     raise NexoRequestException(
                         f'Invalid Response: status: {json_response["errorCode"]}, message: {json_response["errorMessage"]}\n body: {response.request.body}'
@@ -71,7 +80,7 @@ class Client(BaseClient):
         except ValueError:
             raise NexoRequestException("Invalid Response: %s" % json_response)
 
-    def _request(
+    async def _request(
         self, method, path: str, version=BaseClient.PUBLIC_API_VERSION, **kwargs
     ):
         # set default requests timeout
@@ -85,7 +94,9 @@ class Client(BaseClient):
 
         nonce = str(int(time.time() * 1000))
         kwargs["headers"]["X-NONCE"] = nonce
-        kwargs["headers"]["X-SIGNATURE"] = self._generate_signature(nonce)
+        kwargs["headers"]["X-SIGNATURE"] = self._generate_signature(nonce).decode(
+            "utf8"
+        )
 
         if kwargs["data"] and method == "get":
             kwargs["params"] = kwargs["data"]
@@ -94,38 +105,45 @@ class Client(BaseClient):
         if method != "get" and kwargs["data"]:
             kwargs["data"] = compact_json_dict(kwargs["data"])
 
-        response = getattr(self.session, method)(uri, **kwargs)
-        return self._handle_response(response)
+        async with getattr(self.session, method)(uri, **kwargs) as response:
+            self.response = response
+            return await self._handle_response(response)
 
-    def _get(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
-        return self._request("get", path, version, **kwargs)
+    async def _get(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
+        return await self._request("get", path, version, **kwargs)
 
-    def _post(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
-        return self._request("post", path, version, **kwargs)
+    async def _post(
+        self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs
+    ) -> Dict:
+        return await self._request("post", path, version, **kwargs)
 
-    def _put(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
-        return self._request("put", path, version, **kwargs)
+    async def _put(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
+        return await self._request("put", path, version, **kwargs)
 
-    def _delete(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
-        return self._request("delete", path, version, **kwargs)
+    async def _delete(
+        self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs
+    ) -> Dict:
+        return await self._request("delete", path, version, **kwargs)
 
-    def get_account_balances(self, serialize_json_to_object: bool = False) -> Dict:
-        balances_json = self._get("accountSummary")
+    async def get_account_balances(
+        self, serialize_json_to_object: bool = False
+    ) -> Dict:
+        balances_json = await self._get("accountSummary")
 
         if serialize_json_to_object:
             return Balances(balances_json)
 
         return balances_json
 
-    def get_pairs(self, serialize_json_to_object: bool = False) -> Dict:
-        pairs_json = self._get("pairs")
+    async def get_pairs(self, serialize_json_to_object: bool = False) -> Dict:
+        pairs_json = await self._get("pairs")
 
         if serialize_json_to_object:
             return Pairs(pairs_json)
 
         return pairs_json
 
-    def get_price_quote(
+    async def get_price_quote(
         self,
         pair: str,
         amount: float,
@@ -147,14 +165,14 @@ class Client(BaseClient):
         if exchanges:
             data["exchanges"] = exchanges
 
-        quote_json = self._get("quote", data=data)
+        quote_json = await self._get("quote", data=data)
 
         if serialize_json_to_object:
             return Quote(quote_json)
 
         return quote_json
 
-    def get_order_history(
+    async def get_order_history(
         self,
         pairs: List[str],
         start_date: int,
@@ -170,28 +188,28 @@ class Client(BaseClient):
             "pageSize": page_size,
             "pageNum": page_num,
         }
-        orders_json = self._get("orders", data=data)
+        orders_json = await self._get("orders", data=data)
 
         if serialize_json_to_object:
             return Orders(orders_json)
 
         return orders_json
 
-    def get_order_details(
+    async def get_order_details(
         self, id: str, serialize_json_to_object: bool = False
     ) -> Dict:
         data = {
             "id": id,
         }
 
-        order_details_json = self._get(f"orderDetails", data=data)
+        order_details_json = await self._get(f"orderDetails", data=data)
 
         if serialize_json_to_object:
             return OrderDetails(order_details_json)
 
         return order_details_json
 
-    def get_trade_history(
+    async def get_trade_history(
         self,
         pairs: List[str],
         start_date: int,
@@ -214,27 +232,27 @@ class Client(BaseClient):
             "pageNum": page_num,
         }
 
-        trades_json = self._get("trades", data=data)
+        trades_json = await self._get("trades", data=data)
 
         if serialize_json_to_object:
             return TradeHistory(trades_json)
 
         return trades_json
 
-    def get_transaction_info(
+    async def get_transaction_info(
         self, transaction_id: str, serialize_json_to_object: bool = False
     ) -> Dict:
 
         data = {"transactionId": transaction_id}
 
-        transaction_json = self._get(f"transaction", data=data)
+        transaction_json = await self._get(f"transaction", data=data)
 
         if serialize_json_to_object:
             return Transaction(transaction_json)
 
         return transaction_json
 
-    def place_order(
+    async def place_order(
         self,
         pair: str,
         side: str,
@@ -261,14 +279,14 @@ class Client(BaseClient):
         if price:
             data["price"] = price
 
-        order_id_json = self._post("orders", data=data)
+        order_id_json = await self._post("orders", data=data)
 
         if serialize_json_to_object:
             return OrderResponse(order_id_json)
 
         return order_id_json
 
-    def place_trigger_order(
+    async def place_trigger_order(
         self,
         pair: str,
         side: str,
@@ -310,14 +328,14 @@ class Client(BaseClient):
         if trailing_percentage:
             data["trailingPercentage"] = trailing_percentage
 
-        order_id_json = self._post("orders", data=data)
+        order_id_json = await self._post("orders", data=data)
 
         if serialize_json_to_object:
             return OrderResponse(order_id_json)
 
         return order_id_json
 
-    def place_advanced_order(
+    async def place_advanced_order(
         self,
         pair: str,
         side: str,
@@ -343,14 +361,14 @@ class Client(BaseClient):
             "stopLossPrice": stop_loss_price,
             "takeProfitPrice": take_profit_price,
         }
-        order_id_json = self._post("orders", data=data)
+        order_id_json = await self._post("orders", data=data)
 
         if serialize_json_to_object:
             return AdvancedOrderResponse(order_id_json)
 
         return order_id_json
 
-    def place_twap_order(
+    async def place_twap_order(
         self,
         pair: str,
         side: str,
@@ -381,19 +399,19 @@ class Client(BaseClient):
         if exchanges:
             data["exchanges"] = exchanges
 
-        twap_order_json = self._post("orders/twap", data=data)
+        twap_order_json = await self._post("orders/twap", data=data)
 
         if serialize_json_to_object:
             return AdvancedOrderResponse(twap_order_json)
 
         return twap_order_json
 
-    def cancel_order(self, order_id: str):
+    async def cancel_order(self, order_id: str):
         data = {"orderId": order_id}
 
-        return self._post("orders/cancel", data=data)
+        return await self._post("orders/cancel", data=data)
 
-    def cancel_all_orders(self, pair: str):
+    async def cancel_all_orders(self, pair: str):
         if not check_pair_validity(pair):
             raise NexoRequestException(
                 f"Bad Request: Tried to cancel all orders with pair = {pair}, must be of format [A-Z]{{2,6}}/[A-Z]{{2, 6}}"
@@ -401,12 +419,12 @@ class Client(BaseClient):
 
         data = {"pair": pair}
 
-        return self._post("orders/cancel/all", data=data)
+        return await self._post("orders/cancel/all", data=data)
 
-    def get_all_future_instruments(self):
-        return self._get("futures/instruments")
+    async def get_all_future_instruments(self):
+        return await self._get("futures/instruments")
 
-    def get_future_positions(self, status: str):
+    async def get_future_positions(self, status: str):
         if status != "any" and status != "active" and status != "inactive":
             raise NexoRequestException(
                 f"Bad Request: Tried to get future positions with status = {status}, status must be 'any', 'active' or 'inactive'"
@@ -414,9 +432,9 @@ class Client(BaseClient):
 
         data = {"status": status}
 
-        return self._get("futures/positions", data=data)
+        return await self._get("futures/positions", data=data)
 
-    def place_future_order(
+    async def place_future_order(
         self,
         instrument: str,
         position_action: str,
@@ -447,9 +465,7 @@ class Client(BaseClient):
             "quantity": quantity,
         }
 
-        return self._post("futures/order", data=data)
+        return await self._post("futures/order", data=data)
 
-    def close_all_future_positions(self):
-        return self._post("futures/close-all-positions")
-
-
+    async def close_all_future_positions(self):
+        return await self._post("futures/close-all-positions")
