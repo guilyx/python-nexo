@@ -4,6 +4,7 @@
 
 __version__ = "1.0.1"
 
+from nexo.async_client import AsyncClient
 from nexo.client import Client
 from nexo.response_serializers import (
     AdvancedOrderResponse,

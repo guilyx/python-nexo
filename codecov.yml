@@ -17,6 +17,8 @@ parsers:
 ignore:
   - "setup.py"
   - "examples/*"
+  - "nexo/async_client.py"
+  - "nexo/client.py"
 
 comment:
   layout: "reach,diff,flags,files,footer"

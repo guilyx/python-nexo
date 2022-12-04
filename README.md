@@ -59,6 +59,12 @@ Checkout the [Changelog](https://github.com/guilyx/python-nexo/blob/master/docs/
 - Register a Nexo Account. [here](https://nexo.io/ref/vaqo55u5py?src=web-link)
 - Generate an API Key in Nexo Pro with the permissions you want.
 
+## Advice
+
+Priviledge Async Client. The advantage of async processing is that we don’t need to block on I/O which is every action that we make when we interact with the Nexo Pro servers.
+
+By not blocking execution we can continue processing data while we wait for responses or new data from websockets.
+
 ## Set it up 💾
 
 ### PIP
@@ -67,11 +73,37 @@ Checkout the [Changelog](https://github.com/guilyx/python-nexo/blob/master/docs/
 2. Explore the API:
 
 ```python3
+#### Sync
+
 import nexo
 import os
-c = nexo.Client("your_api_key", "your_api_secret")
+from dotenv import load_dotenv
+
+# Loads your API keys from the .env file you created
+load_dotenv()
+key = os.getenv("NEXO_PUBLIC_KEY")
+secret = os.getenv("NEXO_SECRET_KEY")
+
+# Instantiate Client and grab account balances
+c = nexo.Client(key, secret)
 balances = c.get_account_balances()
 print(balances)
+
+#### Async
+
+import nexo
+import os
+import asyncio
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+key = os.getenv("NEXO_PUBLIC_KEY")
+secret = os.getenv("NEXO_SECRET_KEY")
+
+client = nexo.AsyncClient.create(key, secret)
+print(await client.get_account_balances())
 ```
 
 ### Docker (source)
