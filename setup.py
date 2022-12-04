@@ -6,10 +6,8 @@ import re
 
 with open("requirements.txt") as f:
     required = f.read().splitlines()
-
-
 with codecs.open(
-    os.path.join(os.path.abspath(os.path.dirname(__file__)), "nexo", "__init__.py"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "nexo", "__init__.py"),
     "r",
     "latin1",
 ) as fp:
