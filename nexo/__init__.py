@@ -2,7 +2,7 @@
 .. moduleauthor:: Erwin Lejeune
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 from nexo.async_client import AsyncClient
 from nexo.client import Client
