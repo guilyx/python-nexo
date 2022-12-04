@@ -46,10 +46,7 @@ class BaseClient:
     def _get_params_for_sig(data: Dict) -> str:
         return "&".join(["{}={}".format(key, data[key]) for key in data])
 
-    def _generate_signature(
-        self,
-        nonce: str,
-    ) -> str:
+    def _generate_signature(self, nonce: str,) -> str:
         m = hmac.new(
             self.API_SECRET.encode("utf-8"), str(nonce).encode("utf-8"), hashlib.sha256
         )
@@ -488,7 +485,6 @@ class Client(BaseClient):
 
 
 class AsyncClient(BaseClient):
-
     def __init__(self, api_key, api_secret, loop=None):
         self.loop = loop or asyncio.get_event_loop()
         super().__init__(api_key, api_secret)
@@ -514,7 +510,7 @@ class AsyncClient(BaseClient):
         if self.session:
             assert self.session
             await self.session.close()
-    
+
     async def _handle_response(self, response: aiohttp.ClientResponse):
         json_response = {}
 
@@ -529,7 +525,9 @@ class AsyncClient(BaseClient):
         try:
             if "errorCode" in json_response:
                 if json_response["errorCode"] in NEXO_API_ERROR_CODES:
-                    raise NexoAPIException(json_response["errorCode"], await response.text())
+                    raise NexoAPIException(
+                        json_response["errorCode"], await response.text()
+                    )
                 else:
                     raise NexoRequestException(
                         f'Invalid Response: status: {json_response["errorCode"]}, message: {json_response["errorMessage"]}\n body: {response.request.body}'
@@ -559,7 +557,9 @@ class AsyncClient(BaseClient):
 
         nonce = str(int(time.time() * 1000))
         kwargs["headers"]["X-NONCE"] = nonce
-        kwargs["headers"]["X-SIGNATURE"] = self._generate_signature(nonce).decode('utf8')
+        kwargs["headers"]["X-SIGNATURE"] = self._generate_signature(nonce).decode(
+            "utf8"
+        )
 
         if kwargs["data"] and method == "get":
             kwargs["params"] = kwargs["data"]
@@ -575,16 +575,22 @@ class AsyncClient(BaseClient):
     async def _get(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs):
         return await self._request("get", path, version, **kwargs)
 
-    async def _post(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
+    async def _post(
+        self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs
+    ) -> Dict:
         return await self._request("post", path, version, **kwargs)
 
     async def _put(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
         return await self._request("put", path, version, **kwargs)
 
-    async def _delete(self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs) -> Dict:
+    async def _delete(
+        self, path, version=BaseClient.PUBLIC_API_VERSION, **kwargs
+    ) -> Dict:
         return await self._request("delete", path, version, **kwargs)
 
-    async def get_account_balances(self, serialize_json_to_object: bool = False) -> Dict:
+    async def get_account_balances(
+        self, serialize_json_to_object: bool = False
+    ) -> Dict:
         balances_json = await self._get("accountSummary")
 
         if serialize_json_to_object:
