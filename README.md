@@ -150,7 +150,7 @@ Open an issue to state clearly the contribution you want to make. Upon aproval s
 
 ## Buy me a Coffee
 
-*ERC-20 / EVM: **0xebcc98573c3cd9b5b61900d1304da938b5036a0d***
+*ERC-20 / EVM: **0x07ed706146545d01fa66a3c08ebca8c93a0089e5***
 
 *BTC: **bc1q3lu85cfkrc20ut64v90y428l79wfnv83mu72jv***
 
